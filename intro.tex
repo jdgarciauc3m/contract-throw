@@ -1,0 +1,8 @@
+\section{Introduction}
+
+This paper proposes to require that a violation handler needs to be a
+\cppkey{noexcept} function. That is, a violation handler cannot exit by throwing
+an exception.
+
+This change will allow that functions can be \cppkey{noexcept} and include a
+contract in the form of \cppkey{expects} and \cppkey{ensures}.

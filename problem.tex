@@ -1,0 +1,48 @@
+\section{Problems with throwing handlers}
+
+One of my motivating cases for contracts~\cite{p0542} is being able to detect out of bounds
+accesses in vector-like containers:
+
+\begin{lstlisting}
+class my_vector {
+  //...
+  double & operator[](int i) [[expects: i>=0 && i<size()]] { return buf[i]; }
+  //...
+};
+\end{lstlisting}
+
+A class designer may want to enrich this operator to state that it never throws:
+
+\begin{lstlisting}
+class my_vector {
+  //...
+  double & operator[](int i) noexcept [[expects: i>=0 && i<size()]] { return buf[i]; }
+  //...
+};
+\end{lstlisting}
+
+However, in this library type is used in an application that is built with a
+violation handler that throws, the application will terminate as the exception
+will happen in the context of a \cppkey{noexcept} function. The net effect is
+that, with a throwing violation handler, there will be some contract violations
+resulting in exceptions thrown while other contract violations would result in
+program termination.
+
+An answer to this paradox would be to ban \cppkey{expects} and \cppkey{ensures}
+attributes from \cppkey{noexcept} functions. In explanation, you have make a
+choice: either you make your function \cppkey{noexcept} but without any contract
+at all, or you write the contract but give up trying to make the function
+\cppkey{noexcept}.
+
+However, having contracts in the form of \cppkey{expects} and \cppkey{ensures}
+would allow the elimination of checks in those cases where they can be proved to
+be unnecessary. The current situation would prevent standard library vendors
+(and other library vendors) from deploying implementations with contract
+conditions for noexcept functions as those functions could eventually be used in
+a build with a throwing violation handler.
+
+It might be worth to note that there are domains where, for different reasons,
+exceptions are not used today. However, the current situation would impose them
+not to use contracts in noexcept functions even if they will never have a
+throwing violation handler. That seems a violation of the principle \emph{do not
+pay for what you do not use}.
